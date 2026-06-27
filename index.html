@@ -82,8 +82,8 @@
     const BALL_RADIUS = 10;
     const BALL_SPEED = 5;
 
-    const BRICK_ROWS = 5;
-    const BRICK_COLUMNS = 10;
+    const BRICK_ROWS = 7;
+    const BRICK_COLUMNS = 12;
     const BRICK_WIDTH = 70;
     const BRICK_HEIGHT = 25;
     const BRICK_MARGIN = 10;
@@ -161,13 +161,16 @@
       if (itemType === ITEM_TYPES.PADDLE_EXTEND) {
         // 棒を伸ばす
         if (!activePowers.extendedPaddle) {
-          paddle.width = PADDLE_WIDTH * 1.5;
+          paddle.width = PADDLE_WIDTH * 2;
           activePowers.extendedPaddle = true;
           activePowers.extendEndTime = Date.now() / 16.67 + ITEM_DURATION;
         }
       } else if (itemType === ITEM_TYPES.DUAL_BALL) {
-        // ボールを2つ増やす
-        for (let i = 0; i < 2; i++) {
+        // ボールを2つ増やす（最大2個の追加ボール）
+        if (!window.extraBalls) window.extraBalls = [];
+        // 既存の追加ボール数に応じて、2個を超えないようにする
+        const allowedNewBalls = Math.max(0, 2 - window.extraBalls.length);
+        for (let i = 0; i < allowedNewBalls; i++) {
           const newBall = {
             x: ball.x + (Math.random() - 0.5) * 50,
             y: ball.y + (Math.random() - 0.5) * 50,
@@ -175,8 +178,6 @@
             dx: BALL_SPEED * (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 0.4),
             dy: -BALL_SPEED * (0.8 + Math.random() * 0.4)
           };
-          // 複数ボール配列に追加する
-          if (!window.extraBalls) window.extraBalls = [];
           window.extraBalls.push(newBall);
         }
       } else if (itemType === ITEM_TYPES.SLOW_BALL) {
@@ -353,8 +354,8 @@
           const brickCenterX = brick.x + brick.width / 2;
           const brickCenterY = brick.y + brick.height / 2;
           
-          // ランダムでアイテムをスポーン（30%の確率）
-          if (Math.random() < 0.3) {
+          // ランダムでアイテムをスポーン（10%の確率）
+          if (Math.random() < 0.1) {
             spawnItem(brickCenterX, brickCenterY);
           }
           
@@ -450,8 +451,8 @@
               const brickCenterX = brick.x + brick.width / 2;
               const brickCenterY = brick.y + brick.height / 2;
               
-              // ランダムでアイテムをスポーン（30%の確率）
-              if (Math.random() < 0.3) {
+              // ランダムでアイテムをスポーン（10%の確率）
+              if (Math.random() < 0.1) {
                 spawnItem(brickCenterX, brickCenterY);
               }
               
