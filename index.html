@@ -93,7 +93,7 @@
 
     let paddle = {
       x: (SCREEN_WIDTH - PADDLE_WIDTH) / 2,
-      y: SCREEN_HEIGHT - 50,
+      y: SCREEN_HEIGHT - 100,
       width: PADDLE_WIDTH,
       height: PADDLE_HEIGHT,
       dx: 0,
@@ -154,25 +154,14 @@
     function draw() {
       ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
       
-      // デバッグ用: パドルの位置情報をコンソールに出力（最初の1回のみ）
-      if (window.debugPaddle === undefined) {
-        window.debugPaddle = false;
-        console.log('Paddle info:', paddle);
-        console.log('Canvas size:', SCREEN_WIDTH, SCREEN_HEIGHT);
-      }
-      
-      // パドルを描画（黄色・太い枠線付き）
+      // パドルを描画（黄色・はっきり見える）
       ctx.fillStyle = '#ffff00';
       ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
       
       // パドルの枠線も描画
       ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 3;
       ctx.strokeRect(paddle.x, paddle.y, paddle.width, paddle.height);
-      
-      // テスト用：画面下部全体に描画してみる
-      ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
-      ctx.fillRect(0, SCREEN_HEIGHT - 50, SCREEN_WIDTH, 50);
       
       // ボールを描画
       ctx.fillStyle = '#f39c12';
