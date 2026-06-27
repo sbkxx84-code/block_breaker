@@ -226,6 +226,23 @@
     function drawText(text, x, y, size = '24px', color = '#fff') {
       ctx.fillStyle = color;
       ctx.font = `${size} sans-serif`;
+      ctx.textBaseline = 'top';
+      ctx.fillText(text, x, y);
+    }
+
+    function drawTextWithBG(text, x, y, size = '24px', color = '#fff', bgColor = 'rgba(0, 0, 0, 0.5)') {
+      ctx.font = `${size} sans-serif`;
+      ctx.textBaseline = 'top';
+      const metrics = ctx.measureText(text);
+      const width = metrics.width;
+      const height = parseInt(size);
+      
+      // 背景を描画
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(x - 5, y - 5, width + 10, height + 10);
+      
+      // テキストを描画
+      ctx.fillStyle = color;
       ctx.fillText(text, x, y);
     }
 
@@ -294,7 +311,7 @@
         ctx.fillText(itemSymbol, item.x, item.y);
       });
 
-      drawText(`スコア: ${score}`, 20, 40, '28px');
+      drawTextWithBG(`スコア: ${score}`, 20, 20, '28px', '#ffff00', 'rgba(0, 0, 0, 0.7)');
 
       if (gameOver) {
         drawText('ゲームオーバー', SCREEN_WIDTH / 2 - 160, SCREEN_HEIGHT / 2, '48px', '#e74c3c');
