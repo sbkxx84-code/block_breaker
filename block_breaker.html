@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ブロック崩し</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    #gameCanvas {
+      background: #000;
+      display: block;
+      border: 4px solid #fff;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+
+    #instructions {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 14px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="instructions">←/→ または A/D で移動、R で再挑戦</div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const SCREEN_WIDTH = canvas.width;
+    const SCREEN_HEIGHT = canvas.height;
+
+    const PADDLE_WIDTH = 100;
+    const PADDLE_HEIGHT = 15;
+    const PADDLE_SPEED = 7;
+
+    const BALL_RADIUS = 10;
+    const BALL_SPEED = 5;
+
+    const BRICK_ROWS = 5;
+    const BRICK_COLUMNS = 10;
+    const BRICK_WIDTH = 70;
+    const BRICK_HEIGHT = 25;
+    const BRICK_MARGIN = 10;
+    const BRICK_TOP_OFFSET = 60;
+
+    const colors = ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6', '#2ecc71'];
+
+    let paddle = {
+      x: (SCREEN_WIDTH - PADDLE_WIDTH) / 2,
+      y: SCREEN_HEIGHT - 50,
+      width: PADDLE_WIDTH,
+      height: PADDLE_HEIGHT,
+      dx: 0,
+    };
+
+    let ball = {
+      x: SCREEN_WIDTH / 2,
+      y: SCREEN_HEIGHT / 2,
+      radius: BALL_RADIUS,
+      dx: BALL_SPEED * (Math.random() < 0.5 ? -1 : 1),
+      dy: -BALL_SPEED,
+    };
+
+    let bricks = [];
+    let score = 0;
+    let gameOver = false;
+    let win = false;
+    const keys = {};
+
+    function createBricks() {
+      bricks = [];
+      for (let row = 0; row < BRICK_ROWS; row++) {
+        for (let col = 0; col < BRICK_COLUMNS; col++) {
+          const x = BRICK_MARGIN + col * (BRICK_WIDTH + BRICK_MARGIN);
+          const y = BRICK_TOP_OFFSET + row * (BRICK_HEIGHT + BRICK_MARGIN);
+          bricks.push({ x, y, width: BRICK_WIDTH, height: BRICK_HEIGHT, color: colors[row % colors.length] });
+        }
+      }
+    }
+
+    function resetGame() {
+      paddle.x = (SCREEN_WIDTH - PADDLE_WIDTH) / 2;
+      ball.x = SCREEN_WIDTH / 2;
+      ball.y = SCREEN_HEIGHT / 2;
+      ball.dx = BALL_SPEED * (Math.random() < 0.5 ? -1 : 1);
+      ball.dy = -BALL_SPEED;
+      score = 0;
+      gameOver = false;
+      win = false;
+      createBricks();
+    }
+
+    function drawText(text, x, y, size = '24px', color = '#fff') {
+      ctx.fillStyle = color;
+      ctx.font = `${size} sans-serif`;
+      ctx.fillText(text, x, y);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+      ctx.fillStyle = '#f39c12';
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      bricks.forEach((brick) => {
+        ctx.fillStyle = brick.color;
+        ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+        ctx.strokeStyle = '#000';
+        ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
+      });
+
+      drawText(`スコア: ${score}`, 20, 40, '28px');
+
+      if (gameOver) {
+        drawText('ゲームオーバー', SCREEN_WIDTH / 2 - 160, SCREEN_HEIGHT / 2, '48px', '#e74c3c');
+        drawText('Rキーで再挑戦', SCREEN_WIDTH / 2 - 130, SCREEN_HEIGHT / 2 + 50, '24px');
+      }
+
+      if (win) {
+        drawText('完全クリア！', SCREEN_WIDTH / 2 - 140, SCREEN_HEIGHT / 2, '48px', '#2ecc71');
+        drawText('Rキーで再挑戦', SCREEN_WIDTH / 2 - 130, SCREEN_HEIGHT / 2 + 50, '24px');
+      }
+    }
+
+    function update() {
+      if (gameOver || win) return;
+
+      if (keys['ArrowLeft'] || keys['a']) {
+        paddle.x -= PADDLE_SPEED;
+      }
+      if (keys['ArrowRight'] || keys['d']) {
+        paddle.x += PADDLE_SPEED;
+      }
+
+      paddle.x = Math.max(0, Math.min(SCREEN_WIDTH - paddle.width, paddle.x));
+
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= SCREEN_WIDTH) {
+        ball.dx = -ball.dx;
+      }
+      if (ball.y - ball.radius <= 0) {
+        ball.dy = -ball.dy;
+      }
+
+      if (
+        ball.x > paddle.x &&
+        ball.x < paddle.x + paddle.width &&
+        ball.y + ball.radius > paddle.y &&
+        ball.y - ball.radius < paddle.y + paddle.height &&
+        ball.dy > 0
+      ) {
+        ball.dy = -BALL_SPEED;
+        const diff = ball.x - (paddle.x + paddle.width / 2);
+        ball.dx = BALL_SPEED * (diff / (paddle.width / 2));
+      }
+
+      bricks.some((brick, index) => {
+        if (
+          ball.x + ball.radius > brick.x &&
+          ball.x - ball.radius < brick.x + brick.width &&
+          ball.y + ball.radius > brick.y &&
+          ball.y - ball.radius < brick.y + brick.height
+        ) {
+          score += 100;
+          bricks.splice(index, 1);
+          if (Math.abs(ball.y - brick.y) < BALL_SPEED || Math.abs(ball.y - (brick.y + brick.height)) < BALL_SPEED) {
+            ball.dy = -ball.dy;
+          } else {
+            ball.dx = -ball.dx;
+          }
+          return true;
+        }
+        return false;
+      });
+
+      if (ball.y - ball.radius > SCREEN_HEIGHT) {
+        gameOver = true;
+      }
+      if (bricks.length === 0) {
+        win = true;
+      }
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('keydown', (event) => {
+      keys[event.key] = true;
+      if (event.key === 'r' || event.key === 'R') {
+        resetGame();
+      }
+    });
+
+    window.addEventListener('keyup', (event) => {
+      keys[event.key] = false;
+    });
+
+    resetGame();
+    loop();
+  </script>
+</body>
+</html>
