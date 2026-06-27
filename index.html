@@ -101,7 +101,7 @@
 
     let ball = {
       x: SCREEN_WIDTH / 2,
-      y: SCREEN_HEIGHT / 2,
+      y: SCREEN_HEIGHT - 150,
       radius: BALL_RADIUS,
       dx: BALL_SPEED * (Math.random() < 0.5 ? -1 : 1),
       dy: -BALL_SPEED,
@@ -172,11 +172,11 @@
         const allowedNewBalls = Math.max(0, 2 - window.extraBalls.length);
         for (let i = 0; i < allowedNewBalls; i++) {
           const newBall = {
-            x: ball.x + (Math.random() - 0.5) * 50,
-            y: ball.y + (Math.random() - 0.5) * 50,
+            x: paddle.x + paddle.width / 2 + (Math.random() - 0.5) * 100,
+            y: paddle.y - 50,
             radius: BALL_RADIUS,
             dx: BALL_SPEED * (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 0.4),
-            dy: -BALL_SPEED * (0.8 + Math.random() * 0.4)
+            dy: BALL_SPEED * (0.8 + Math.random() * 0.4)
           };
           window.extraBalls.push(newBall);
         }
@@ -205,7 +205,7 @@
       paddle.x = (SCREEN_WIDTH - PADDLE_WIDTH) / 2;
       paddle.width = PADDLE_WIDTH;
       ball.x = SCREEN_WIDTH / 2;
-      ball.y = SCREEN_HEIGHT / 2;
+      ball.y = SCREEN_HEIGHT - 150;
       ball.dx = BALL_SPEED * (Math.random() < 0.5 ? -1 : 1);
       ball.dy = -BALL_SPEED;
       score = 0;
@@ -365,10 +365,31 @@
           }
           
           destroyedBrickIndices.add(index);
-          if (Math.abs(ball.y - brick.y) < BALL_SPEED || Math.abs(ball.y - (brick.y + brick.height)) < BALL_SPEED) {
+          
+          // 衝突方向を判定して跳ね返す
+          const overlapLeft = ball.x + ball.radius - brick.x;
+          const overlapRight = brick.x + brick.width - (ball.x - ball.radius);
+          const overlapTop = ball.y + ball.radius - brick.y;
+          const overlapBottom = brick.y + brick.height - (ball.y - ball.radius);
+          
+          const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+          
+          if (minOverlap === overlapTop || minOverlap === overlapBottom) {
             ball.dy = -ball.dy;
+            // ボールをブロック外側に押し出す
+            if (minOverlap === overlapTop) {
+              ball.y = brick.y - ball.radius;
+            } else {
+              ball.y = brick.y + brick.height + ball.radius;
+            }
           } else {
             ball.dx = -ball.dx;
+            // ボールをブロック外側に押し出す
+            if (minOverlap === overlapLeft) {
+              ball.x = brick.x - ball.radius;
+            } else {
+              ball.x = brick.x + brick.width + ball.radius;
+            }
           }
           break; // 1フレームで1ブロックのみ破壊
         }
@@ -395,10 +416,31 @@
               }
               
               destroyedBrickIndices.add(index);
-              if (Math.abs(eBall.y - brick.y) < BALL_SPEED || Math.abs(eBall.y - (brick.y + brick.height)) < BALL_SPEED) {
+              
+              // 衝突方向を判定して跳ね返す
+              const overlapLeft = eBall.x + eBall.radius - brick.x;
+              const overlapRight = brick.x + brick.width - (eBall.x - eBall.radius);
+              const overlapTop = eBall.y + eBall.radius - brick.y;
+              const overlapBottom = brick.y + brick.height - (eBall.y - eBall.radius);
+              
+              const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+              
+              if (minOverlap === overlapTop || minOverlap === overlapBottom) {
                 eBall.dy = -eBall.dy;
+                // ボールをブロック外側に押し出す
+                if (minOverlap === overlapTop) {
+                  eBall.y = brick.y - eBall.radius;
+                } else {
+                  eBall.y = brick.y + brick.height + eBall.radius;
+                }
               } else {
                 eBall.dx = -eBall.dx;
+                // ボールをブロック外側に押し出す
+                if (minOverlap === overlapLeft) {
+                  eBall.x = brick.x - eBall.radius;
+                } else {
+                  eBall.x = brick.x + brick.width + eBall.radius;
+                }
               }
               break; // 1フレームで1ブロックのみ破壊
             }
