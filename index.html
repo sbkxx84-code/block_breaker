@@ -2,9 +2,33 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, orientation=landscape" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>ブロック崩し</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 縦向きを横向きに強制 */
+    @media (orientation: portrait) {
+      html {
+        transform: rotate(90deg);
+        transform-origin: left top;
+        width: 100vh;
+        height: 100vw;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+    }
+
     body {
       margin: 0;
       background: #111;
@@ -669,6 +693,13 @@
     canvas.addEventListener('pointercancel', canvasHandleUp);
     canvas.addEventListener('touchend', canvasHandleUp, { passive: true });
     document.addEventListener('touchend', canvasHandleUp, { passive: true });
+
+    // iOSで横向きをロック
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {
+        // ロックできない場合は無視
+      });
+    }
 
     resetGame();
     loop();
