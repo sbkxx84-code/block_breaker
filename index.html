@@ -80,14 +80,14 @@
     const PADDLE_SPEED = 7;
 
     const BALL_RADIUS = 10;
-    const BALL_SPEED = 5;
+    const BALL_SPEED = 3;
 
     const BRICK_ROWS = 7;
     const BRICK_COLUMNS = 12;
     const BRICK_WIDTH = 55;
     const BRICK_HEIGHT = 25;
     const BRICK_MARGIN = 10;
-    const BRICK_TOP_OFFSET = 60;
+    const BRICK_TOP_OFFSET = 100;
 
     const colors = ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6', '#2ecc71'];
 
@@ -370,7 +370,7 @@
           } else {
             ball.dx = -ball.dx;
           }
-          break;
+          break; // 1フレームで1ブロックのみ破壊
         }
       }
 
@@ -400,7 +400,7 @@
               } else {
                 eBall.dx = -eBall.dx;
               }
-              break;
+              break; // 1フレームで1ブロックのみ破壊
             }
           }
         });
