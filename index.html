@@ -1,40 +1,10 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ブロック崩し</title>
-  <style>
-    body {
-      margin: 0;
-      background: #111;
-      color: #fff;
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    #gameCanvas {
-      background: #000;
-      display: block;
-      border: 4px solid #fff;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-    }
-
-    #instructions {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 14px;
-      color: #fff;
-    }
-  </style>
-</head>
-<body>
   <canvas id="gameCanvas" width="800" height="600"></canvas>
-  <div id="instructions">←/→ または A/D で移動、R で再挑戦</div>
+  <div id="instructions">←/→ または A/D、または画面左右タップで移動します</div>
+  <div id="mobileControls">
+    <button id="leftButton" class="control">← 左</button>
+    <button id="restartButton" class="control">再挑戦</button>
+    <button id="rightButton" class="control">右 →</button>
+  </div>
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -79,6 +49,15 @@
     let gameOver = false;
     let win = false;
     const keys = {};
+
+    function setTouchControl(direction, active) {
+      if (direction === 'left') {
+        keys['ArrowLeft'] = active;
+      }
+      if (direction === 'right') {
+        keys['ArrowRight'] = active;
+      }
+    }
 
     function createBricks() {
       bricks = [];
@@ -216,8 +195,52 @@
       keys[event.key] = false;
     });
 
+    const leftButton = document.getElementById('leftButton');
+    const rightButton = document.getElementById('rightButton');
+    const restartButton = document.getElementById('restartButton');
+
+    function clearTouchControls() {
+      setTouchControl('left', false);
+      setTouchControl('right', false);
+      leftButton.classList.remove('active');
+      rightButton.classList.remove('active');
+    }
+
+    leftButton.addEventListener('pointerdown', () => {
+      setTouchControl('left', true);
+      leftButton.classList.add('active');
+    });
+    leftButton.addEventListener('pointerup', clearTouchControls);
+    leftButton.addEventListener('pointerleave', clearTouchControls);
+    leftButton.addEventListener('pointercancel', clearTouchControls);
+
+    rightButton.addEventListener('pointerdown', () => {
+      setTouchControl('right', true);
+      rightButton.classList.add('active');
+    });
+    rightButton.addEventListener('pointerup', clearTouchControls);
+    rightButton.addEventListener('pointerleave', clearTouchControls);
+    rightButton.addEventListener('pointercancel', clearTouchControls);
+
+    restartButton.addEventListener('click', resetGame);
+
+    canvas.addEventListener('pointerdown', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      if (x < rect.width / 2) {
+        setTouchControl('left', true);
+        leftButton.classList.add('active');
+      } else {
+        setTouchControl('right', true);
+        rightButton.classList.add('active');
+      }
+    });
+    canvas.addEventListener('pointerup', clearTouchControls);
+    canvas.addEventListener('pointercancel', clearTouchControls);
+
     resetGame();
     loop();
   </script>
 </body>
 </html>
+>>>>>>> 8950e54 (Update mobile-friendly controls)
