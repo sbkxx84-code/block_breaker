@@ -228,13 +228,13 @@
 
     function drawText(text, x, y, size = '24px', color = '#fff') {
       ctx.fillStyle = color;
-      ctx.font = `${size} sans-serif`;
+      ctx.font = `${size} Arial, sans-serif`;
       ctx.textBaseline = 'top';
       ctx.fillText(text, x, y);
     }
 
     function drawTextWithBG(text, x, y, size = '24px', color = '#fff', bgColor = 'rgba(0, 0, 0, 0.5)') {
-      ctx.font = `${size} sans-serif`;
+      ctx.font = `${size} Arial, sans-serif`;
       ctx.textBaseline = 'top';
       const metrics = ctx.measureText(text);
       const width = metrics.width;
