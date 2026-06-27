@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, orientation=landscape" />
   <title>ブロック崩し</title>
   <style>
     body {
@@ -33,22 +33,27 @@
 
     #mobileControls {
       position: absolute;
-      bottom: 20px;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 20px;
+      gap: 15px;
+      z-index: 100;
     }
 
     .control {
-      padding: 10px 20px;
+      padding: 15px 30px;
       background: #3498db;
       color: #fff;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
+      min-width: 60px;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .control:hover {
@@ -57,6 +62,18 @@
 
     .control.active {
       background: #e74c3c;
+    }
+
+    @media (max-width: 800px) {
+      #mobileControls {
+        bottom: 5px;
+        gap: 10px;
+      }
+      .control {
+        padding: 12px 25px;
+        font-size: 16px;
+        min-width: 50px;
+      }
     }
   </style>
 </head>
@@ -77,7 +94,7 @@
 
     const PADDLE_WIDTH = 100;
     const PADDLE_HEIGHT = 15;
-    const PADDLE_SPEED = 7;
+    const PADDLE_SPEED = 10;
 
     const BALL_RADIUS = 10;
     const BALL_SPEED = 4;
@@ -588,27 +605,48 @@
       rightButton.classList.remove('active');
     }
 
-    leftButton.addEventListener('pointerdown', () => {
+    // 左ボタンハンドラー
+    const handleLeftDown = () => {
       setTouchControl('left', true);
       leftButton.classList.add('active');
-    });
-    leftButton.addEventListener('pointerup', clearTouchControls);
-    leftButton.addEventListener('pointerleave', clearTouchControls);
-    leftButton.addEventListener('pointercancel', clearTouchControls);
+    };
+    const handleLeftUp = () => {
+      setTouchControl('left', false);
+      leftButton.classList.remove('active');
+    };
 
-    rightButton.addEventListener('pointerdown', () => {
+    leftButton.addEventListener('pointerdown', handleLeftDown);
+    leftButton.addEventListener('touchstart', handleLeftDown, { passive: true });
+    leftButton.addEventListener('pointerup', handleLeftUp);
+    leftButton.addEventListener('pointercancel', handleLeftUp);
+    leftButton.addEventListener('touchend', handleLeftUp, { passive: true });
+    document.addEventListener('pointerup', handleLeftUp);
+    document.addEventListener('touchend', handleLeftUp, { passive: true });
+
+    // 右ボタンハンドラー
+    const handleRightDown = () => {
       setTouchControl('right', true);
       rightButton.classList.add('active');
-    });
-    rightButton.addEventListener('pointerup', clearTouchControls);
-    rightButton.addEventListener('pointerleave', clearTouchControls);
-    rightButton.addEventListener('pointercancel', clearTouchControls);
+    };
+    const handleRightUp = () => {
+      setTouchControl('right', false);
+      rightButton.classList.remove('active');
+    };
+
+    rightButton.addEventListener('pointerdown', handleRightDown);
+    rightButton.addEventListener('touchstart', handleRightDown, { passive: true });
+    rightButton.addEventListener('pointerup', handleRightUp);
+    rightButton.addEventListener('pointercancel', handleRightUp);
+    rightButton.addEventListener('touchend', handleRightUp, { passive: true });
+    document.addEventListener('pointerup', handleRightUp);
+    document.addEventListener('touchend', handleRightUp, { passive: true });
 
     restartButton.addEventListener('click', resetGame);
 
-    canvas.addEventListener('pointerdown', (event) => {
+    // キャンバスタッチハンドラー
+    const canvasHandleDown = (event) => {
       const rect = canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
+      const x = event.clientX !== undefined ? event.clientX - rect.left : event.touches[0].clientX - rect.left;
       if (x < rect.width / 2) {
         setTouchControl('left', true);
         leftButton.classList.add('active');
@@ -616,9 +654,21 @@
         setTouchControl('right', true);
         rightButton.classList.add('active');
       }
-    });
-    canvas.addEventListener('pointerup', clearTouchControls);
-    canvas.addEventListener('pointercancel', clearTouchControls);
+    };
+
+    const canvasHandleUp = () => {
+      setTouchControl('left', false);
+      setTouchControl('right', false);
+      leftButton.classList.remove('active');
+      rightButton.classList.remove('active');
+    };
+
+    canvas.addEventListener('pointerdown', canvasHandleDown);
+    canvas.addEventListener('touchstart', canvasHandleDown, { passive: true });
+    canvas.addEventListener('pointerup', canvasHandleUp);
+    canvas.addEventListener('pointercancel', canvasHandleUp);
+    canvas.addEventListener('touchend', canvasHandleUp, { passive: true });
+    document.addEventListener('touchend', canvasHandleUp, { passive: true });
 
     resetGame();
     loop();
