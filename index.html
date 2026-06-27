@@ -113,12 +113,79 @@
     let win = false;
     const keys = {};
 
+    // アイテムシステム
+    let items = [];
+    const ITEM_TYPES = {
+      PADDLE_EXTEND: 'paddle_extend',    // 棒が伸びる
+      DUAL_BALL: 'dual_ball',            // 球が2つ増える
+      SLOW_BALL: 'slow_ball'             // ボールがゆっくり
+    };
+    const ITEM_SIZE = 20;
+    const ITEM_FALL_SPEED = 2;
+    const ITEM_DURATION = 300; // フレーム数
+
+    let activePowers = {
+      extendedPaddle: false,
+      extendEndTime: 0,
+      slowBall: false,
+      slowEndTime: 0
+    };
+
+    // グローバル初期化
+    window.extraBalls = [];
+    window.ballSpeedMultiplier = 1;
+
     function setTouchControl(direction, active) {
       if (direction === 'left') {
         keys['ArrowLeft'] = active;
       }
       if (direction === 'right') {
         keys['ArrowRight'] = active;
+      }
+    }
+
+    function spawnItem(x, y) {
+      const itemTypes = Object.values(ITEM_TYPES);
+      const randomType = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+      items.push({
+        x: x,
+        y: y,
+        type: randomType,
+        width: ITEM_SIZE,
+        height: ITEM_SIZE,
+        dy: ITEM_FALL_SPEED
+      });
+    }
+
+    function activatePowerUp(itemType) {
+      if (itemType === ITEM_TYPES.PADDLE_EXTEND) {
+        // 棒を伸ばす
+        if (!activePowers.extendedPaddle) {
+          paddle.width = PADDLE_WIDTH * 1.5;
+          activePowers.extendedPaddle = true;
+          activePowers.extendEndTime = Date.now() / 16.67 + ITEM_DURATION;
+        }
+      } else if (itemType === ITEM_TYPES.DUAL_BALL) {
+        // ボールを2つ増やす
+        for (let i = 0; i < 2; i++) {
+          const newBall = {
+            x: ball.x + (Math.random() - 0.5) * 50,
+            y: ball.y + (Math.random() - 0.5) * 50,
+            radius: BALL_RADIUS,
+            dx: BALL_SPEED * (Math.random() < 0.5 ? -1 : 1) * (0.8 + Math.random() * 0.4),
+            dy: -BALL_SPEED * (0.8 + Math.random() * 0.4)
+          };
+          // 複数ボール配列に追加する
+          if (!window.extraBalls) window.extraBalls = [];
+          window.extraBalls.push(newBall);
+        }
+      } else if (itemType === ITEM_TYPES.SLOW_BALL) {
+        // ボールをゆっくりにする
+        if (!activePowers.slowBall) {
+          window.ballSpeedMultiplier = 0.5;
+          activePowers.slowBall = true;
+          activePowers.slowEndTime = Date.now() / 16.67 + ITEM_DURATION;
+        }
       }
     }
 
@@ -135,6 +202,7 @@
 
     function resetGame() {
       paddle.x = (SCREEN_WIDTH - PADDLE_WIDTH) / 2;
+      paddle.width = PADDLE_WIDTH;
       ball.x = SCREEN_WIDTH / 2;
       ball.y = SCREEN_HEIGHT / 2;
       ball.dx = BALL_SPEED * (Math.random() < 0.5 ? -1 : 1);
@@ -142,6 +210,15 @@
       score = 0;
       gameOver = false;
       win = false;
+      items = [];
+      window.extraBalls = [];
+      window.ballSpeedMultiplier = 1;
+      activePowers = {
+        extendedPaddle: false,
+        extendEndTime: 0,
+        slowBall: false,
+        slowEndTime: 0
+      };
       createBricks();
     }
 
@@ -169,11 +246,51 @@
       ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
       ctx.fill();
 
+      // 追加のボールを描画
+      if (window.extraBalls) {
+        window.extraBalls.forEach((extraBall) => {
+          ctx.fillStyle = '#ff6600';
+          ctx.beginPath();
+          ctx.arc(extraBall.x, extraBall.y, extraBall.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
       bricks.forEach((brick) => {
         ctx.fillStyle = brick.color;
         ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
         ctx.strokeStyle = '#000';
         ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
+      });
+
+      // アイテムを描画
+      items.forEach((item) => {
+        let itemColor = '#ffffff';
+        let itemSymbol = '';
+        
+        if (item.type === ITEM_TYPES.PADDLE_EXTEND) {
+          itemColor = '#0088ff';
+          itemSymbol = 'P';
+        } else if (item.type === ITEM_TYPES.DUAL_BALL) {
+          itemColor = '#ff8800';
+          itemSymbol = 'B';
+        } else if (item.type === ITEM_TYPES.SLOW_BALL) {
+          itemColor = '#00ff00';
+          itemSymbol = 'S';
+        }
+        
+        ctx.fillStyle = itemColor;
+        ctx.fillRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(item.x - item.width / 2, item.y - item.height / 2, item.width, item.height);
+        
+        // シンボルを描画
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(itemSymbol, item.x, item.y);
       });
 
       drawText(`スコア: ${score}`, 20, 40, '28px');
@@ -201,8 +318,10 @@
 
       paddle.x = Math.max(0, Math.min(SCREEN_WIDTH - paddle.width, paddle.x));
 
-      ball.x += ball.dx;
-      ball.y += ball.dy;
+      if (!window.ballSpeedMultiplier) window.ballSpeedMultiplier = 1;
+
+      ball.x += ball.dx * window.ballSpeedMultiplier;
+      ball.y += ball.dy * window.ballSpeedMultiplier;
 
       if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= SCREEN_WIDTH) {
         ball.dx = -ball.dx;
@@ -231,6 +350,14 @@
           ball.y - ball.radius < brick.y + brick.height
         ) {
           score += 100;
+          const brickCenterX = brick.x + brick.width / 2;
+          const brickCenterY = brick.y + brick.height / 2;
+          
+          // ランダムでアイテムをスポーン（50%の確率）
+          if (Math.random() < 0.5) {
+            spawnItem(brickCenterX, brickCenterY);
+          }
+          
           bricks.splice(index, 1);
           if (Math.abs(ball.y - brick.y) < BALL_SPEED || Math.abs(ball.y - (brick.y + brick.height)) < BALL_SPEED) {
             ball.dy = -ball.dy;
@@ -247,6 +374,75 @@
       }
       if (bricks.length === 0) {
         win = true;
+      }
+
+      // アイテムの更新
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        item.y += item.dy;
+
+        // パドルとの衝突判定
+        if (
+          item.x > paddle.x &&
+          item.x < paddle.x + paddle.width &&
+          item.y > paddle.y &&
+          item.y < paddle.y + paddle.height
+        ) {
+          // アイテム効果を実行
+          activatePowerUp(item.type);
+          items.splice(i, 1);
+          continue;
+        }
+
+        // 画面外に落ちたアイテムを削除
+        if (item.y > SCREEN_HEIGHT) {
+          items.splice(i, 1);
+        }
+      }
+
+      // パワーアップの効果時間をチェック
+      if (activePowers.extendedPaddle && Date.now() > activePowers.extendEndTime * 16.67) {
+        activePowers.extendedPaddle = false;
+        paddle.width = PADDLE_WIDTH;
+      }
+      if (activePowers.slowBall && Date.now() > activePowers.slowEndTime * 16.67) {
+        activePowers.slowBall = false;
+        window.ballSpeedMultiplier = 1;
+      }
+
+      // 追加のボールを更新
+      if (window.extraBalls) {
+        for (let i = window.extraBalls.length - 1; i >= 0; i--) {
+          const eBall = window.extraBalls[i];
+          eBall.x += eBall.dx * window.ballSpeedMultiplier;
+          eBall.y += eBall.dy * window.ballSpeedMultiplier;
+
+          // 壁との衝突
+          if (eBall.x - eBall.radius <= 0 || eBall.x + eBall.radius >= SCREEN_WIDTH) {
+            eBall.dx = -eBall.dx;
+          }
+          if (eBall.y - eBall.radius <= 0) {
+            eBall.dy = -eBall.dy;
+          }
+
+          // パドルとの衝突
+          if (
+            eBall.x > paddle.x &&
+            eBall.x < paddle.x + paddle.width &&
+            eBall.y + eBall.radius > paddle.y &&
+            eBall.y - eBall.radius < paddle.y + paddle.height &&
+            eBall.dy > 0
+          ) {
+            eBall.dy = -BALL_SPEED;
+            const diff = eBall.x - (paddle.x + paddle.width / 2);
+            eBall.dx = BALL_SPEED * (diff / (paddle.width / 2));
+          }
+
+          // 画面下部に落ちたボールを削除
+          if (eBall.y - eBall.radius > SCREEN_HEIGHT) {
+            window.extraBalls.splice(i, 1);
+          }
+        }
       }
     }
 
