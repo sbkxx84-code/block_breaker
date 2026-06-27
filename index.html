@@ -80,7 +80,7 @@
     const PADDLE_SPEED = 7;
 
     const BALL_RADIUS = 10;
-    const BALL_SPEED = 3;
+    const BALL_SPEED = 4;
 
     const BRICK_ROWS = 7;
     const BRICK_COLUMNS = 12;
@@ -103,8 +103,8 @@
       x: SCREEN_WIDTH / 2,
       y: SCREEN_HEIGHT - 150,
       radius: BALL_RADIUS,
-      dx: BALL_SPEED * (Math.random() < 0.5 ? -1 : 1),
-      dy: -BALL_SPEED,
+      dx: 3 * (Math.random() < 0.5 ? -1 : 1),
+      dy: -3,
     };
 
     let bricks = [];
@@ -164,6 +164,9 @@
           paddle.width = PADDLE_WIDTH * 2;
           activePowers.extendedPaddle = true;
           activePowers.extendEndTime = Date.now() / 16.67 + ITEM_DURATION;
+        } else {
+          // 既に効果がある場合は時間を追加
+          activePowers.extendEndTime += ITEM_DURATION;
         }
       } else if (itemType === ITEM_TYPES.DUAL_BALL) {
         // ボールを2つ増やす（最大2個の追加ボール）
@@ -206,8 +209,8 @@
       paddle.width = PADDLE_WIDTH;
       ball.x = SCREEN_WIDTH / 2;
       ball.y = SCREEN_HEIGHT - 150;
-      ball.dx = BALL_SPEED * (Math.random() < 0.5 ? -1 : 1);
-      ball.dy = -BALL_SPEED;
+      ball.dx = 3 * (Math.random() < 0.5 ? -1 : 1);
+      ball.dy = -3;
       score = 0;
       gameOver = false;
       win = false;
@@ -473,7 +476,15 @@
         });
 
       if (ball.y - ball.radius > SCREEN_HEIGHT) {
-        gameOver = true;
+        // extraBallsが存在する場合、メインボールをリセットして続行
+        if (window.extraBalls && window.extraBalls.length > 0) {
+          ball.x = SCREEN_WIDTH / 2;
+          ball.y = SCREEN_HEIGHT - 150;
+          ball.dx = 3 * (Math.random() < 0.5 ? -1 : 1);
+          ball.dy = -3;
+        } else {
+          gameOver = true;
+        }
       }
       if (bricks.length === 0) {
         win = true;
