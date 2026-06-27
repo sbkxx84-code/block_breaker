@@ -353,8 +353,8 @@
           const brickCenterX = brick.x + brick.width / 2;
           const brickCenterY = brick.y + brick.height / 2;
           
-          // ランダムでアイテムをスポーン（50%の確率）
-          if (Math.random() < 0.5) {
+          // ランダムでアイテムをスポーン（30%の確率）
+          if (Math.random() < 0.3) {
             spawnItem(brickCenterX, brickCenterY);
           }
           
@@ -437,6 +437,34 @@
             const diff = eBall.x - (paddle.x + paddle.width / 2);
             eBall.dx = BALL_SPEED * (diff / (paddle.width / 2));
           }
+
+          // ブロック衝突判定
+          bricks.some((brick, brickIndex) => {
+            if (
+              eBall.x + eBall.radius > brick.x &&
+              eBall.x - eBall.radius < brick.x + brick.width &&
+              eBall.y + eBall.radius > brick.y &&
+              eBall.y - eBall.radius < brick.y + brick.height
+            ) {
+              score += 100;
+              const brickCenterX = brick.x + brick.width / 2;
+              const brickCenterY = brick.y + brick.height / 2;
+              
+              // ランダムでアイテムをスポーン（30%の確率）
+              if (Math.random() < 0.3) {
+                spawnItem(brickCenterX, brickCenterY);
+              }
+              
+              bricks.splice(brickIndex, 1);
+              if (Math.abs(eBall.y - brick.y) < BALL_SPEED || Math.abs(eBall.y - (brick.y + brick.height)) < BALL_SPEED) {
+                eBall.dy = -eBall.dy;
+              } else {
+                eBall.dx = -eBall.dx;
+              }
+              return true;
+            }
+            return false;
+          });
 
           // 画面下部に落ちたボールを削除
           if (eBall.y - eBall.radius > SCREEN_HEIGHT) {
